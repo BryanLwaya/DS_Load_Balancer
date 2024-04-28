@@ -1,12 +1,30 @@
 version: "3.9"
 
 services:
+  load_balancer:
+    build:
+      context: ./load_balancer
+      dockerfile: Dockerfile
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    privileged: true
+    ports:
+      - "8000:5000"  # Maps host port 8000 to container port 5000
+    depends_on:
+      - server1
+      - server2
+      - server3
+    networks:
+      - app-network
+    environment:
+      - SERVERS=server1:5001,server2:5002,server3:5003
+
   server1:
     build:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5001:8000"
+      - "5001:5000"  # Maps host port 5001 to container port 5000
     environment:
       - SERVER_ID=s001
     networks:
@@ -17,7 +35,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5002:8000"
+      - "5002:5000"  # Maps host port 5002 to container port 5000
     environment:
       - SERVER_ID=s002
     networks:
@@ -28,28 +46,11 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5003:8000"
+      - "5003:5000"  # Maps host port 5003 to container port 5000
     environment:
       - SERVER_ID=s003
     networks:
       - app-network
-
-  load_balancer:
-    build:
-      context: ./load_balancer
-      dockerfile: Dockerfile
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-    ports:
-      - "8000:5000"
-    depends_on:
-      - server1
-      - server2
-      - server3
-    networks:
-      - app-network
-    environment:
-      - SERVERS=server1,server2,server3
 
 networks:
   app-network:

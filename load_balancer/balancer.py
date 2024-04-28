@@ -1,5 +1,7 @@
-from flask import Flask, jsonify, request, redirect
-
+from flask import Flask, jsonify, request, redirect, Response
+import requests
+import os
+import json
 from hashing import ConsistentHashing
 
 app = Flask(__name__)
@@ -7,9 +9,9 @@ consistent_hash = ConsistentHashing()
 registered_paths = {'/home', '/heartbeat'}
 
 
-@app.route('/')
-def root():
-    return redirect('/<path>')
+# @app.route('/')
+# def root():
+#     return redirect('/<path:path>')
 
 
 @app.route('/rep', methods=['GET'])
@@ -73,19 +75,36 @@ def remove_servers():
         return jsonify(first_failure), 400
 
 
-@app.route('/<path>', methods=['GET'])
+@app.route('/<path:path>', methods=['GET'])
 def route_request(path):
     try:
-        if path not in registered_paths:
-            return jsonify(message={"error": "Path not registered with the load balancer"}, status="failure"), 404
-
+        # if path not in registered_paths:
+        #     return jsonify(message={"error": "Path not registered with the load balancer"}, status="failure"), 404
+        print(path)
         request_id = hash(path)
         print(f"Request ID: {request_id}")
         server_id = consistent_hash.map_request_to_server(request_id)
-        return jsonify(message=f"Request {path} routed to Server {server_id}"), 200
+        print(server_id)
+        script_dir = os.path.dirname(__file__)
+        config_file = os.path.join(script_dir, 'server_configs/default.json')
+
+        with open(config_file, 'r') as file:
+            server_config = json.load(file)
+            for server in server_config['servers']:
+                if server['id'] == server_id:
+                    site_name = server['url']
+        print(site_name)
+
+        resp = requests.get(f"{site_name}/{path}")
+        excluded_headers = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+        headers = [(name, value) for name, value in resp.raw.headers.items() if name.lower() not in excluded_headers]
+
+        response = Response(resp.content, resp.status_code, headers)
+        return response
+        # return jsonify(message=f"Request {path} routed to Server {server_id}"), 200
     except Exception as e:
         return jsonify(message={"error": str(e)}, status="failure"), 500
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=8000)

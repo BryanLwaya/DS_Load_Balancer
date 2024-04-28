@@ -4,19 +4,19 @@
       "id": 66177,
       "hostname": "server1",
       "hostport": 5001,
-      "url": "http://server1:5001"
+      "url": "http://server1:5000"
     },
     {
       "id": 74413,
       "hostname": "server2",
       "hostport": 5002,
-        "url": "http://server2:5002"
+      "url": "http://server2:5000"
     },
     {
       "id": 93598,
       "hostname": "server3",
       "hostport": 5003,
-        "url": "http://server3:5003"
+      "url": "http://server3:5000"
     }
   ]
 }

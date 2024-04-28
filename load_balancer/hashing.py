@@ -41,6 +41,7 @@ class ConsistentHashing:
 
                 self.no_of_servers += 1
                 print(f"Added server {server_id} with hostname {hostname}")
+                print(self.hash_ring)
             except Exception as e:
                 return {"message": f"An error occurred while adding server {hostname}: {e}", "status": "failure"}, 500
         else:
@@ -69,9 +70,9 @@ class ConsistentHashing:
         # Find the server with the next highest hash value
         for server_hash, server_id in self.hash_ring.items():
             if server_hash >= request_hash_value:
-                return server_id
+                return server_id[0]
         # If the request hash value is greater than all server hash values wrap around to the first server
-        return self.hash_ring.peekitem(0)[1]
+        return self.hash_ring.peekitem(0)[0]
 
     # in case a server does not respond to heartbeat and needs to be updated
     def update_servers(self, server_id, hostname):
